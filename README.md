@@ -1,4 +1,4 @@
-# kaw_random
+# kaw-random
 
 A modern, production-grade C++20 header-only random number utility library under the `kaw::random` namespace.
 
