@@ -36,6 +36,8 @@ public:
 
 private:
   static std::mt19937& get_engine() {
+    // TODO: Improve seeding quality (mt19937 needs 19937 bits of entropy, but is only seeded with 32 bits here).
+    // Consider using std::seed_seq filled with multiple random_device values or fallback entropy.
     thread_local std::mt19937 engine{std::random_device{}()};
     return engine;
   }
@@ -54,6 +56,8 @@ public:
 
 private:
   static std::mt19937& get_engine() {
+    // TODO: Improve seeding quality (mt19937 needs 19937 bits of entropy, but is only seeded with 32 bits here).
+    // Consider using std::seed_seq filled with multiple random_device values or fallback entropy.
     thread_local std::mt19937 engine{std::random_device{}()};
     return engine;
   }
@@ -67,6 +71,8 @@ template <typename T>
 requires std::integral<T> || std::floating_point<T>
 T get(T low, T high) {
   using dist_t = random_dist_t<T>;
+  // TODO: Improve seeding quality (mt19937 needs 19937 bits of entropy, but is only seeded with 32 bits here).
+  // Consider using std::seed_seq filled with multiple random_device values or fallback entropy.
   thread_local std::mt19937 engine{std::random_device{}()};
   dist_t dist(low, high);
   return dist(engine);
@@ -74,12 +80,15 @@ T get(T low, T high) {
 
 // Generate a random boolean (default 50% probability)
 inline bool get_bool(double probability = 0.5) {
+  // TODO: Improve seeding quality (mt19937 needs 19937 bits of entropy, but is only seeded with 32 bits here).
+  // Consider using std::seed_seq filled with multiple random_device values or fallback entropy.
   thread_local std::mt19937 engine{std::random_device{}()};
   std::bernoulli_distribution dist(probability);
   return dist(engine);
 }
 
 // Fill an existing container in-place
+// TODO: Consider using C++20 std::ranges::generate(container, generator) here instead of a manual loop.
 template <typename Container>
 void fill(Container& container, typename Container::value_type low, typename Container::value_type high) {
   using T = typename Container::value_type;
@@ -96,6 +105,12 @@ Container generate(size_t size, typename Container::value_type low, typename Con
   fill(container, low, high);
   return container;
 }
+
+// TODO: Add a helper function for shuffling ranges/containers using std::ranges::shuffle under the hood:
+// template <typename Range>
+// void shuffle(Range& r) {
+//   std::ranges::shuffle(r, get_engine());
+// }
 
 } // namespace kaw::random
 
