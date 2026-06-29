@@ -1,0 +1,12 @@
+# CMake build output
+/build/
+
+# IDE configurations
+.vscode/
+.idea/
+*.swp
+*~
+
+# Operating system files
+.DS_Store
+Thumbs.db
