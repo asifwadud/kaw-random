@@ -19,17 +19,19 @@ Include the library header:
 ```
 
 ### 1. Stateful Generators & Functors (Type Aliases)
-Generate random values by instantiating a stateful generator functor using type aliases under the `kaw` namespace. These can be called directly or passed to C++ standard algorithms (like `std::generate`):
+Generate random values by instantiating a stateful generator functor using type aliases under the `kaw` namespace. These can be called directly or passed to C++ standard algorithms (like `std::generate`).
+
+* **`random_int`** generates random integers for a closed/inclusive range `[low, high]` [^1].
+* **`random_bool`** generates random booleans based on a probability parameter [^2].
+
 ```cpp
 using namespace kaw;
 
 // 1. Basic Generation
-// Create a stateful random integer generator for range [1, 100] [^1]
 random_int rand_int(1, 100);
 int first = rand_int();       // e.g. 42
 int second = rand_int();      // e.g. 7
 
-// Create a stateful random boolean generator [^2]
 random_bool rand_bool(0.5);   // 50% probability of true
 bool val = rand_bool();       // e.g. true
 
@@ -43,11 +45,11 @@ std::generate(values.begin(), values.end(), rand_float);
 [^2]: **Specialized for bools:** Maps to `std::bernoulli_distribution`. Standardized as single probability parameter.
 
 ### 2. Convenience Free Functions
-Generate random numbers on-the-fly without instantiating a generator class:
+Generate random numbers on-the-fly without instantiating a generator class, using inclusive ranges for integers and half-open/exclusive ranges `[low, high)` for reals [^3]:
 ```cpp
 // Free function calls directly in kaw::random
 int val1 = kaw::random::get(1, 10);            // 1 to 10 inclusive
-double val2 = kaw::random::get(0.0, 1.0);      // 0.0 to 1.0 (exclusive) [^3]
+double val2 = kaw::random::get(0.0, 1.0);      // 0.0 to 1.0 (exclusive)
 ```
 
 [^3]: **Exclusive `[low, high)` for reals:** Maps to `std::uniform_real_distribution`. Standardized as half-open by the C++ committee to match real math standards and avoid out-of-bounds indexing when scaling.
@@ -58,13 +60,13 @@ bool heads = kaw::random::get_bool();          // Default 50% probability
 bool lucky = kaw::random::get_bool(0.1);       // 10% chance of returning true
 ```
 
-### 3. Filling an Existing Container
+### 4. Filling an Existing Container
 ```cpp
 std::vector<int> scores(100);
 kaw::random::fill(scores, 1, 100);             // Fills vector in-place
 ```
 
-### 4. Generating a New Container
+### 5. Generating a New Container
 ```cpp
 // Explicitly specify the desired container type as a template parameter
 auto prices = kaw::random::generate<std::vector<double>>(50, 10.0, 50.0);
