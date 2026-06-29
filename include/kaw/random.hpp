@@ -14,6 +14,9 @@
 
 namespace kaw::random {
 
+// TODO: Consider selecting std::mt19937 or std::mt19937_64 dynamically based on CPU word size (e.g., using sizeof(void*) == 8 or INTPTR_MAX == INT64_MAX).
+// Note that doing so will break cross-architecture reproducibility (32-bit vs 64-bit outputs will differ), but it optimizes performance on 64-bit systems.
+
 // Compile-time distribution selection constraint
 template <typename T>
 using random_dist_t = std::conditional_t<
