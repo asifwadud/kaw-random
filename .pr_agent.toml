@@ -23,5 +23,5 @@ Ensure code changes comply with the following rules:
    - Naming:
      * Free functions & aliases: snake_case (e.g., get_bool, random_int).
      * Class/Functor names: lowercase (e.g., gen).
-     * Class member variables: camelCase (e.g., distribution).
+     * Class member variables: snake_case (e.g., distribution_engine).
 """
