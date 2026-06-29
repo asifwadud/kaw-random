@@ -1,32 +1,27 @@
-# GitHub App
+# GitHub App Settings
 [github_app]
+# Commands to run automatically when a PR is created or updated
 pr_commands = [
-    "/agentic_describe",
-    "/agentic_review"
+    "/describe",
+    "/review"
 ]
 
-[review_agent]
-comments_location_policy = "both"
-
-# severity threshold rank for inline comments:
-# 3=action_required,
-# 2=remediation_recommended,
-# 1=informational.
-# Only findings with rank >= threshold will be published inline
-inline_comments_severity_threshold = 3
-
-# Extra prompt for usecase to be added as instruction for the agent
-issues_user_guidelines = """
+[pr_reviewer]
+# Custom instructions for the standard `/review` command
+extra_instructions = """
 This is a modern C++20 header-only random number utility library under the `kaw::random` namespace.
-Please check the code for the following logic and quality rules:
-1. Thread Safety: Ensure random number generator engines (std::mt19937) are thread_local to prevent race conditions and multi-threaded lock contention.
-2. C++20 Concepts: Verify template functions use concepts (e.g., std::integral, std::floating_point) instead of legacy SFINAE or std::enable_if.
+Ensure code changes comply with the following rules:
+
+1. Thread Safety: Ensure random number generator engines (such as std::mt19937) are declared thread_local. Reject static/global engines to prevent multi-threaded lock contention.
+2. C++20 Concepts: Ensure template functions use standard C++20 concepts (e.g., std::integral, std::floating_point) instead of legacy SFINAE or std::enable_if.
 3. Interval Bounds: Integer distributions must use closed intervals [low, high]; floating-point distributions must use half-open intervals [low, high).
 4. Header-only compilation: All functions in headers must be inline, templates, or class members to avoid duplicate symbol linker errors.
-"""
-
-compliance_user_guidelines = """
-Ensure that:
-1. Catch2 unit test cases in tests/RandomNumbersTest.cpp are added or updated to cover any logic changes.
-2. Code style matches the existing codebase conventions.
+5. Unit Tests: Verify that updates to library logic are accompanied by updates to Catch2 tests in tests/RandomNumbersTest.cpp.
+6. Code Style:
+   - Indentation: 2 spaces.
+   - Braces: Opening brace on the same line as class/function declarations.
+   - Naming:
+     * Free functions & aliases: snake_case (e.g., get_bool, random_int).
+     * Class/Functor names: lowercase (e.g., gen).
+     * Class member variables: camelCase (e.g., distribution).
 """
