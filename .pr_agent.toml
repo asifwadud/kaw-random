@@ -1,0 +1,10 @@
+[pr_reviewer]
+extra_instructions = """
+This is a modern C++20 header-only random number utility library under the `kaw::random` namespace.
+Please pay special attention to:
+1. Thread Safety: Verify all random number generation uses thread_local engines (e.g. `thread_local std::mt19937`) to avoid state sharing and lock contention.
+2. C++20 Concepts: Ensure template constraints use modern C++20 concepts (e.g. `std::integral`, `std::floating_point`) instead of old SFINAE / `std::enable_if` patterns.
+3. Interval Bounds: Integer random numbers (uniform_int_distribution) must use closed bounds [low, high]. Real/floating-point random numbers (uniform_real_distribution) must use half-open bounds [low, high).
+4. Header-Only Constraints: Ensure all function definitions in the header file are marked inline or templated to prevent duplicate symbol linker errors.
+5. Unit Tests: Verify that changes to library code are accompanied by corresponding updates or additions to Catch2 test cases in the `tests/` directory.
+"""

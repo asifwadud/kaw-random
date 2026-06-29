@@ -85,3 +85,24 @@ cmake -B build -S .
 cmake --build build
 cd build && ctest --verbose
 ```
+
+## AI Code Reviews
+
+This repository integrates with **Codium PR-Agent** to provide automated, agentic code reviews on Pull Requests. The review process is optimized for our modern C++20 and thread-safety guidelines.
+
+### How It Works
+- **Automatic Triggers:** When a new Pull Request is opened or updated, PR-Agent automatically analyzes the diff, formats a clean PR description, and provides structural code suggestions/reviews.
+- **Interactive Commands:** You can comment on your Pull Request using commands to trigger specific tasks. Some useful commands include:
+  - `/review` - Ask the agent to re-run the code review.
+  - `/improve` - Request specific inline code improvement suggestions.
+  - `/describe` - Regenerate the Pull Request title and description based on the code changes.
+  - `/ask <question>` - Ask questions about the Pull Request diff.
+
+### Custom Review Guidelines
+PR-Agent is configured to check for compliance with:
+- Thread-safe random number generation (`thread_local std::mt19937` engines).
+- C++20 concepts (`std::integral`, `std::floating_point` instead of SFINAE template tricks).
+- Closed distribution bounds for integers, half-open distribution bounds for real numbers.
+- Header-only rules (ensuring non-template free functions are `inline`).
+- Catch2 test updates on code modifications.
+
