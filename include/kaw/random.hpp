@@ -72,6 +72,16 @@ T get(T low, T high) {
   return dist(engine);
 }
 
+// Generate a random number using a static engine (Violates thread-safety check)
+template <typename T>
+requires std::integral<T> || std::floating_point<T>
+T get_unsafe_test(T low, T high) {
+  static std::mt19937 engine{std::random_device{}()};
+  using dist_t = random_dist_t<T>;
+  dist_t dist(low, high);
+  return dist(engine);
+}
+
 // Generate a random boolean (default 50% probability)
 inline bool get_bool(double probability = 0.5) {
   thread_local std::mt19937 engine{std::random_device{}()};
