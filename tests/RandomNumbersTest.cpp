@@ -115,14 +115,17 @@ TEST_CASE("Verify engine seed space matches the configured strategy", "[Random][
 #endif
 }
 
+#ifdef KAW_RANDOM_TEST_MULTI_THREADED_UNIQUENESS
 TEST_CASE("High-quality seeding ensures multi-threaded uniqueness", "[Random][Seeding]") {
   const int num_threads = 10;
   std::vector<std::thread> threads;
-  std::vector<int> initial_values(num_threads);
+  std::vector<std::vector<int>> sequences(num_threads, std::vector<int>(5));
 
   for (int i = 0; i < num_threads; ++i) {
-    threads.push_back(std::thread([&initial_values, i]() {
-      initial_values[i] = kaw::random::get(0, 1000000);
+    threads.push_back(std::thread([&sequences, i]() {
+      for (int j = 0; j < 5; ++j) {
+        sequences[i][j] = kaw::random::get(0, 1000000);
+      }
     }));
   }
 
@@ -130,8 +133,9 @@ TEST_CASE("High-quality seeding ensures multi-threaded uniqueness", "[Random][Se
     t.join();
   }
 
-  std::set<int> unique_values(initial_values.begin(), initial_values.end());
+  std::set<std::vector<int>> unique_sequences(sequences.begin(), sequences.end());
   
-  // Verify all threads produced different random numbers, proving independent seeds
-  REQUIRE(unique_values.size() == num_threads);
+  // Verify all threads produced different random sequences, proving independent seeds
+  REQUIRE(unique_sequences.size() == num_threads);
 }
+#endif

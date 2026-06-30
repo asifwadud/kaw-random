@@ -39,10 +39,16 @@ inline constexpr size_t get_seed_entropy_element_count() {
 // Factory function to initialize the engine with the configured strategy
 inline std::mt19937 create_seeded_engine() {
     if constexpr (active_strategy == seeding_strategy::basic) {
+        // Basic strategy relies entirely on std::random_device.
+        // It does not mix in fallback entropy (system clock/thread ID),
+        // meaning it can yield identical seeds across threads if std::random_device is deterministic.
         std::random_device rd;
         return std::mt19937(rd());
     } 
     else if constexpr (active_strategy == seeding_strategy::full) {
+        // Full strategy queries std::random_device for the complete state array.
+        // Similar to Basic, it does not mix in fallback entropy to preserve the pure
+        // entropy source, which can result in deterministic behavior if std::random_device is deterministic.
         std::array<std::uint32_t, std::mt19937::state_size> seeds;
         std::random_device rd;
         for (auto& val : seeds) {
