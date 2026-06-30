@@ -1,0 +1,46 @@
+BasedOnStyle: Google
+Language: Cpp
+Standard: Latest
+
+# Indentation and column limits
+IndentWidth: 2
+ContinuationIndentWidth: 4
+ColumnLimit: 100
+TabWidth: 2
+UseTab: Never
+
+# Bracing style
+BreakBeforeBraces: Attach
+
+# Class member alignment and accessibility
+AccessModifierOffset: -2
+
+# Alignment and spacing
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments:
+  Enabled: false
+AlignConsecutiveDeclarations:
+  Enabled: false
+AlignConsecutiveMacros:
+  Enabled: false
+
+# Spaces inside/around parentheses/braces
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyBlock: false
+
+# Short blocks and functions
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# Sort includes
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup

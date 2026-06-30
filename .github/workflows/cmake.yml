@@ -22,3 +22,28 @@ jobs:
 
     - name: Run Tests
       run: ctest --test-dir build -C Release --output-on-failure
+
+  cpp-linter:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Configure CMake (Export Compile Commands)
+      run: cmake -B build -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+    - name: Run C++ Linter
+      uses: cpp-linter/cpp-linter-action@v2
+      id: linter
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        style: 'file'
+        tidy-checks: ''
+        database: 'build'
+        version: '20'
+        files-changed-only: true
+        thread-comments: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}

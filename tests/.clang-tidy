@@ -1,0 +1,10 @@
+InheritParentConfig: true
+Checks: >
+  -cppcoreguidelines-avoid-do-while,
+  -bugprone-chained-comparison,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-magic-numbers,
+  -cert-err58-cpp,
+  -readability-function-cognitive-complexity,
+  -readability-uppercase-literal-suffix,
+  -modernize-use-ranges
