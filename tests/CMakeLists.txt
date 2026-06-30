@@ -8,7 +8,6 @@ FetchContent_MakeAvailable(Catch2)
 
 # Default (Balanced) test target
 add_executable(kaw_random_tests RandomNumbersTest.cpp)
-target_compile_definitions(kaw_random_tests PRIVATE KAW_RANDOM_TEST_MULTI_THREADED_UNIQUENESS)
 target_link_libraries(kaw_random_tests PRIVATE kaw_random Catch2::Catch2WithMain)
 
 # Basic seeding test target
