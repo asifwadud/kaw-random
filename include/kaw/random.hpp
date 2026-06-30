@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <cstdint>
+#include <kaw/detail/seeding_strategies.hpp>
 
 #if __has_include(<stdfloat>)
 #include <stdfloat>
@@ -39,10 +40,7 @@ public:
 
 private:
   static std::mt19937& get_engine() {
-    // TODO: Improve seeding quality (mt19937 needs 19937 bits of entropy, but is only seeded with 32 bits here).
-    // Consider using std::seed_seq filled with multiple random_device values or fallback entropy.
-    thread_local std::mt19937 engine{std::random_device{}()};
-    return engine;
+    return detail::get_thread_engine();
   }
   dist_type distribution;
 };
@@ -59,10 +57,7 @@ public:
 
 private:
   static std::mt19937& get_engine() {
-    // TODO: Improve seeding quality (mt19937 needs 19937 bits of entropy, but is only seeded with 32 bits here).
-    // Consider using std::seed_seq filled with multiple random_device values or fallback entropy.
-    thread_local std::mt19937 engine{std::random_device{}()};
-    return engine;
+    return detail::get_thread_engine();
   }
   std::bernoulli_distribution distribution;
 };
@@ -74,20 +69,14 @@ template <typename T>
 requires std::integral<T> || std::floating_point<T>
 T get(T low, T high) {
   using dist_t = random_dist_t<T>;
-  // TODO: Improve seeding quality (mt19937 needs 19937 bits of entropy, but is only seeded with 32 bits here).
-  // Consider using std::seed_seq filled with multiple random_device values or fallback entropy.
-  thread_local std::mt19937 engine{std::random_device{}()};
   dist_t dist(low, high);
-  return dist(engine);
+  return dist(detail::get_thread_engine());
 }
 
 // Generate a random boolean (default 50% probability)
 inline bool get_bool(double probability = 0.5) {
-  // TODO: Improve seeding quality (mt19937 needs 19937 bits of entropy, but is only seeded with 32 bits here).
-  // Consider using std::seed_seq filled with multiple random_device values or fallback entropy.
-  thread_local std::mt19937 engine{std::random_device{}()};
   std::bernoulli_distribution dist(probability);
-  return dist(engine);
+  return dist(detail::get_thread_engine());
 }
 
 // Fill an existing container in-place

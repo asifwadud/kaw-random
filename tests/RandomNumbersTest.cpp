@@ -1,6 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <kaw/random.hpp>
 #include <vector>
+#include <thread>
+#include <set>
 
 TEST_CASE("Random integer generation matches bounds", "[Random]") {
   int low = 1;
@@ -89,4 +91,47 @@ TEST_CASE("Root-level type aliases and bool specialization", "[Random]") {
       REQUIRE(val < 1.0);
     }
   }
+}
+
+TEST_CASE("Verify engine seed space matches the configured strategy", "[Random][Seeding]") {
+  constexpr size_t seed_elements = kaw::random::detail::get_seed_entropy_element_count();
+  constexpr size_t seed_bits = seed_elements * 32;
+
+#if defined(KAW_RANDOM_SEED_BASIC)
+  SECTION("Basic Seeding Strategy") {
+    REQUIRE(seed_elements == 1);
+    REQUIRE(seed_bits == 32);
+  }
+#elif defined(KAW_RANDOM_SEED_FULL)
+  SECTION("Full Seeding Strategy") {
+    REQUIRE(seed_elements == std::mt19937::state_size); // 624
+    REQUIRE(seed_bits == 19968);
+  }
+#else // default: balanced
+  SECTION("Balanced Seeding Strategy") {
+    REQUIRE(seed_elements == 10);
+    REQUIRE(seed_bits == 320);
+  }
+#endif
+}
+
+TEST_CASE("High-quality seeding ensures multi-threaded uniqueness", "[Random][Seeding]") {
+  const int num_threads = 10;
+  std::vector<std::thread> threads;
+  std::vector<int> initial_values(num_threads);
+
+  for (int i = 0; i < num_threads; ++i) {
+    threads.push_back(std::thread([&initial_values, i]() {
+      initial_values[i] = kaw::random::get(0, 1000000);
+    }));
+  }
+
+  for (auto& t : threads) {
+    t.join();
+  }
+
+  std::set<int> unique_values(initial_values.begin(), initial_values.end());
+  
+  // Verify all threads produced different random numbers, proving independent seeds
+  REQUIRE(unique_values.size() == num_threads);
 }
