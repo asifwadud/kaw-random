@@ -73,6 +73,33 @@ auto prices = kaw::random::generate<std::vector<double>>(50, 10.0, 50.0);
 ```
 
 
+## Seeding & Strategies
+
+To ensure high-quality random numbers and prevent seed collisions across concurrent threads and execution environments, `kaw-random` uses a consolidated `thread_local std::mt19937` engine per thread.
+
+The library supports three seeding strategies, selectable at compile time using preprocessor macros:
+
+| Strategy | Macro | Seed Size | Description | Initialization Performance |
+| :--- | :--- | :--- | :--- | :--- |
+| **Balanced** *(Default)* | *(none)* | 320 bits (10x `uint32_t`) | 256 bits of true entropy mixed with fallback time, thread ID, and stack address offsets. Resilient against deterministic/broken platform `std::random_device` implementations. | Very Fast (8 `std::random_device` queries) |
+| **Basic** | `KAW_RANDOM_SEED_BASIC` | 32 bits (1x `uint32_t`) | Legacy single-seed method. | Ultra Fast (1 `std::random_device` query) |
+| **Full** | `KAW_RANDOM_SEED_FULL` | 19,968 bits (624x `uint32_t`) | Fills the entire internal state of the Mersenne Twister engine. | Slow (624 `std::random_device` queries) |
+
+### How to Configure
+
+Define the macro in your project before including `kaw/random.hpp`:
+
+```cpp
+#define KAW_RANDOM_SEED_FULL
+#include <kaw/random.hpp>
+```
+
+Or configure it globally in your build system (e.g. CMake):
+
+```cmake
+target_compile_definitions(your_target PRIVATE KAW_RANDOM_SEED_FULL)
+```
+
 ---
 
 ## Testing
