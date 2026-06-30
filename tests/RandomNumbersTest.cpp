@@ -1,8 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <kaw/random.hpp>
-#include <vector>
-#include <thread>
 #include <set>
+#include <thread>
+#include <vector>
 
 TEST_CASE("Random integer generation matches bounds", "[Random]") {
   int low = 1;
@@ -68,7 +68,8 @@ TEST_CASE("Root-level type aliases and bool specialization", "[Random]") {
     kaw::random_bool r_bool(0.5);
     int true_count = 0;
     for (int i = 0; i < 1000; ++i) {
-      if (r_bool()) true_count++;
+      if (r_bool())
+        true_count++;
     }
     REQUIRE(true_count > 400);
     REQUIRE(true_count < 600);
@@ -104,10 +105,10 @@ TEST_CASE("Verify engine seed space matches the configured strategy", "[Random][
   }
 #elif defined(KAW_RANDOM_SEED_FULL)
   SECTION("Full Seeding Strategy") {
-    REQUIRE(seed_elements == std::mt19937::state_size); // 624
+    REQUIRE(seed_elements == std::mt19937::state_size);  // 624
     REQUIRE(seed_bits == 19968);
   }
-#else // default: balanced
+#else  // default: balanced
   SECTION("Balanced Seeding Strategy") {
     REQUIRE(seed_elements == 10);
     REQUIRE(seed_bits == 320);
@@ -118,14 +119,15 @@ TEST_CASE("Verify engine seed space matches the configured strategy", "[Random][
 TEST_CASE("High-quality seeding ensures multi-threaded uniqueness", "[Random][Seeding]") {
   const int num_threads = 10;
   std::vector<std::thread> threads;
+  threads.reserve(num_threads);
   std::vector<std::vector<int>> sequences(num_threads, std::vector<int>(5));
 
   for (int i = 0; i < num_threads; ++i) {
-    threads.push_back(std::thread([&sequences, i]() {
+    threads.emplace_back([&sequences, i]() {
       for (int j = 0; j < 5; ++j) {
         sequences[i][j] = kaw::random::get(0, 1000000);
       }
-    }));
+    });
   }
 
   for (auto& t : threads) {
@@ -133,7 +135,7 @@ TEST_CASE("High-quality seeding ensures multi-threaded uniqueness", "[Random][Se
   }
 
   std::set<std::vector<int>> unique_sequences(sequences.begin(), sequences.end());
-  
+
   // Verify all threads produced different random sequences, proving independent seeds
   REQUIRE(unique_sequences.size() == num_threads);
 }

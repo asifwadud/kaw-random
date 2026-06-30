@@ -113,6 +113,35 @@ cmake --build build
 cd build && ctest --verbose
 ```
 
+## Linting & Formatting
+
+The project enforces code formatting and static analysis checks using `clang-format` and `clang-tidy` based on the C++ Core Guidelines.
+
+### Prerequisites
+
+Configure CMake to export compile commands (required by `clang-tidy` to resolve header paths):
+```bash
+cmake -B build -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+```
+
+### Formatting
+
+* **Format all source files in place**:
+  ```bash
+  cmake --build build --target format
+  ```
+* **Verify formatting without modifying files (Dry-Run)**:
+  ```bash
+  cmake --build build --target format-check
+  ```
+
+### Static Analysis
+
+* **Run static analysis via clang-tidy**:
+  ```bash
+  cmake --build build --target lint
+  ```
+
 ## AI Code Reviews
 
 This repository integrates with **Codium PR-Agent** to provide automated, agentic code reviews on Pull Requests. The review process is optimized for our modern C++20 and thread-safety guidelines.
