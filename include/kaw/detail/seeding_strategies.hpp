@@ -17,6 +17,10 @@ enum class seeding_strategy {
 };
 
 // Select the active strategy at compile time
+#if defined(KAW_RANDOM_SEED_BASIC) && defined(KAW_RANDOM_SEED_FULL)
+#error "Cannot define both KAW_RANDOM_SEED_BASIC and KAW_RANDOM_SEED_FULL"
+#endif
+
 #if defined(KAW_RANDOM_SEED_BASIC)
 constexpr seeding_strategy active_strategy = seeding_strategy::basic;
 #elif defined(KAW_RANDOM_SEED_FULL)
