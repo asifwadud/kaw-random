@@ -115,7 +115,6 @@ TEST_CASE("Verify engine seed space matches the configured strategy", "[Random][
 #endif
 }
 
-#ifdef KAW_RANDOM_TEST_MULTI_THREADED_UNIQUENESS
 TEST_CASE("High-quality seeding ensures multi-threaded uniqueness", "[Random][Seeding]") {
   const int num_threads = 10;
   std::vector<std::thread> threads;
@@ -138,4 +137,3 @@ TEST_CASE("High-quality seeding ensures multi-threaded uniqueness", "[Random][Se
   // Verify all threads produced different random sequences, proving independent seeds
   REQUIRE(unique_sequences.size() == num_threads);
 }
-#endif

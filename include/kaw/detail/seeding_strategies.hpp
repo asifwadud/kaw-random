@@ -40,24 +40,59 @@ inline constexpr size_t get_seed_entropy_element_count() {
     }
 }
 
+struct fallback_entropy {
+    std::uint32_t now_entropy;
+    std::uint32_t thread_entropy;
+    std::uint32_t address_low;
+    std::uint32_t address_high;
+};
+
+inline fallback_entropy get_fallback_entropy() {
+    auto now = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    auto thread_id = std::this_thread::get_id();
+    volatile int local_var = 0;
+    std::uintptr_t address = reinterpret_cast<std::uintptr_t>(&local_var);
+    
+    std::uint32_t high = 0;
+    if constexpr (sizeof(std::uintptr_t) >= 8) {
+        high = static_cast<std::uint32_t>(address >> 32);
+    }
+    
+    return fallback_entropy {
+        static_cast<std::uint32_t>(now),
+        static_cast<std::uint32_t>(std::hash<std::thread::id>{}(thread_id)),
+        static_cast<std::uint32_t>(address),
+        high
+    };
+}
+
 // Factory function to initialize the engine with the configured strategy
 inline std::mt19937 create_seeded_engine() {
     if constexpr (active_strategy == seeding_strategy::basic) {
-        // Basic strategy relies entirely on std::random_device.
-        // It does not mix in fallback entropy (system clock/thread ID),
-        // meaning it can yield identical seeds across threads if std::random_device is deterministic.
         std::random_device rd;
-        return std::mt19937(rd());
+        std::uint32_t seed = rd();
+        
+        auto fallback = get_fallback_entropy();
+        seed ^= fallback.now_entropy;
+        seed ^= fallback.thread_entropy;
+        seed ^= fallback.address_low;
+        seed ^= fallback.address_high;
+        
+        return std::mt19937(seed);
     } 
     else if constexpr (active_strategy == seeding_strategy::full) {
-        // Full strategy queries std::random_device for the complete state array.
-        // Similar to Basic, it does not mix in fallback entropy to preserve the pure
-        // entropy source, which can result in deterministic behavior if std::random_device is deterministic.
         std::array<std::uint32_t, std::mt19937::state_size> seeds;
         std::random_device rd;
         for (auto& val : seeds) {
             val = rd();
         }
+        
+        auto fallback = get_fallback_entropy();
+        seeds[0] ^= fallback.now_entropy;
+        seeds[1] ^= fallback.thread_entropy;
+        seeds[2] ^= fallback.address_low;
+        seeds[3] ^= fallback.address_high;
+        
         std::seed_seq seq(seeds.begin(), seeds.end());
         return std::mt19937(seq);
     } 
@@ -68,16 +103,9 @@ inline std::mt19937 create_seeded_engine() {
             seeds[i] = rd();
         }
         
-        auto now = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-        seeds[8] = static_cast<std::uint32_t>(now);
-        
-        auto thread_id = std::this_thread::get_id();
-        seeds[9] = static_cast<std::uint32_t>(std::hash<std::thread::id>{}(thread_id));
-        
-        volatile int local_var = 0;
-        std::uintptr_t address = reinterpret_cast<std::uintptr_t>(&local_var);
-        seeds[8] ^= static_cast<std::uint32_t>(address);
-        seeds[9] ^= static_cast<std::uint32_t>(address >> (sizeof(std::uintptr_t) >= 8 ? 32 : 0));
+        auto fallback = get_fallback_entropy();
+        seeds[8] = fallback.now_entropy ^ fallback.address_low;
+        seeds[9] = fallback.thread_entropy ^ fallback.address_high;
         
         std::seed_seq seq(seeds.begin(), seeds.end());
         return std::mt19937(seq);
