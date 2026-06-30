@@ -6,6 +6,7 @@
 #include <chrono>
 #include <thread>
 #include <cstdint>
+#include <functional>
 
 namespace kaw::random::detail {
 
