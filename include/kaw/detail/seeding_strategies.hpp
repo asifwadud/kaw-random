@@ -1,12 +1,14 @@
 #ifndef KAW_DETAIL_SEEDING_STRATEGIES_HPP
 #define KAW_DETAIL_SEEDING_STRATEGIES_HPP
 
+#include <algorithm>
 #include <array>
-#include <chrono>
 #include <cstdint>
 #include <functional>
+#include <kaw/detail/fallback_entropy.hpp>
+#include <limits>
 #include <random>
-#include <thread>
+#include <tuple>
 
 namespace kaw::random::detail {
 
@@ -27,78 +29,50 @@ constexpr seeding_strategy active_strategy = seeding_strategy::balanced;
 
 // Returns compile-time configured entropy element count
 constexpr size_t get_seed_entropy_element_count() {
+  constexpr size_t result_bits = std::numeric_limits<std::random_device::result_type>::digits;
   if constexpr (active_strategy == seeding_strategy::basic) {
-    return 1;
+    return 1;  // NOLINT
   } else if constexpr (active_strategy == seeding_strategy::full) {
-    return std::mt19937::state_size;  // 624
-  } else {                            // balanced
-    return 10;
+    // std::mt19937 requires state_size elements of word_size width
+    constexpr size_t target_bits = std::mt19937::state_size * std::mt19937::word_size;
+    return (target_bits + result_bits - 1) / result_bits;
+  } else {  // balanced
+    // balanced targets 256 bits of entropy
+    constexpr size_t target_bits = 256;
+    constexpr size_t required = (target_bits + result_bits - 1) / result_bits;
+    // Must be at least the size of fallback entropy fields (4)
+    return required < 4 ? 4 : required;
   }
 }
 
-struct fallback_entropy {
-  std::uint32_t now_entropy;
-  std::uint32_t thread_entropy;
-  std::uint32_t address_low;
-  std::uint32_t address_high;
-};
+template <std::size_t size>
+inline auto make_random_device_seeds() {
+  std::array<std::random_device::result_type, size> device_seeds{};
+  std::random_device rand_dev;
+  std::ranges::generate(device_seeds, std::ref(rand_dev));
+  return device_seeds;
+}
 
-inline fallback_entropy get_fallback_entropy() {
-  auto now = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-  auto thread_id = std::this_thread::get_id();
-  volatile int local_var = 0;
-  auto address = reinterpret_cast<std::uintptr_t>(&local_var);
+template <std::size_t size>
+inline void mix_fallback_entropy(std::array<std::random_device::result_type, size>& seeds) {
+  auto fallback_values = fallback_entropy_values();
+  static_assert(size >= std::tuple_size_v<decltype(fallback_entropy_values())>,
+                "seed array must have at least one slot per fallback_entropy field");
 
-  std::uint32_t high = 0;
-  if constexpr (sizeof(std::uintptr_t) >= 8) {
-    high = static_cast<std::uint32_t>(address >> 32);
-  }
-
-  return fallback_entropy{
-      .now_entropy = static_cast<std::uint32_t>(now),
-      .thread_entropy = static_cast<std::uint32_t>(std::hash<std::thread::id>{}(thread_id)),
-      .address_low = static_cast<std::uint32_t>(address),
-      .address_high = high};
+  std::ranges::transform(fallback_values, seeds, seeds.begin(), std::bit_xor<>());
 }
 
 // Factory function to initialize the engine with the configured strategy
 inline std::mt19937 create_seeded_engine() {
   if constexpr (active_strategy == seeding_strategy::basic) {
-    std::random_device rd;
-    std::uint32_t seed = rd();
+    auto seed = std::random_device{}();
 
-    auto fallback = get_fallback_entropy();
-    seed ^= fallback.now_entropy;
-    seed ^= fallback.thread_entropy;
-    seed ^= fallback.address_low;
-    seed ^= fallback.address_high;
+    std::ranges::for_each(fallback_entropy_values(), [&seed](auto value) { seed ^= value; });
 
     return std::mt19937(seed);
-  } else if constexpr (active_strategy == seeding_strategy::full) {
-    std::array<std::uint32_t, std::mt19937::state_size> seeds{};
-    std::random_device rd;
-    for (auto& val : seeds) {
-      val = rd();
-    }
-
-    auto fallback = get_fallback_entropy();
-    seeds[0] ^= fallback.now_entropy;
-    seeds[1] ^= fallback.thread_entropy;
-    seeds[2] ^= fallback.address_low;
-    seeds[3] ^= fallback.address_high;
-
-    std::seed_seq seq(seeds.begin(), seeds.end());
-    return std::mt19937(seq);
-  } else {  // balanced (default)
-    std::array<std::uint32_t, 10> seeds{};
-    std::random_device rd;
-    for (size_t i = 0; i < 8; ++i) {
-      seeds[i] = rd();
-    }
-
-    auto fallback = get_fallback_entropy();
-    seeds[8] = fallback.now_entropy ^ fallback.address_low;
-    seeds[9] = fallback.thread_entropy ^ fallback.address_high;
+  } else {  // for both balanced (default) and full seeding strategy, differs only in seed_seq size
+    auto seeds = make_random_device_seeds<get_seed_entropy_element_count()>();
+    mix_fallback_entropy(seeds);
 
     std::seed_seq seq(seeds.begin(), seeds.end());
     return std::mt19937(seq);

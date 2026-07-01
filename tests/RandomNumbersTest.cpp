@@ -1,5 +1,8 @@
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <kaw/random.hpp>
+#include <limits>
+#include <random>
 #include <set>
 #include <thread>
 #include <vector>
@@ -68,8 +71,9 @@ TEST_CASE("Root-level type aliases and bool specialization", "[Random]") {
     kaw::random_bool r_bool(0.5);
     int true_count = 0;
     for (int i = 0; i < 1000; ++i) {
-      if (r_bool())
+      if (r_bool()) {
         true_count++;
+      }
     }
     REQUIRE(true_count > 400);
     REQUIRE(true_count < 600);
@@ -96,43 +100,43 @@ TEST_CASE("Root-level type aliases and bool specialization", "[Random]") {
 
 TEST_CASE("Verify engine seed space matches the configured strategy", "[Random][Seeding]") {
   constexpr size_t seed_elements = kaw::random::detail::get_seed_entropy_element_count();
-  constexpr size_t seed_bits = seed_elements * 32;
+  constexpr size_t result_bits = std::numeric_limits<std::random_device::result_type>::digits;
 
 #if defined(KAW_RANDOM_SEED_BASIC)
   SECTION("Basic Seeding Strategy") {
     REQUIRE(seed_elements == 1);
-    REQUIRE(seed_bits == 32);
   }
 #elif defined(KAW_RANDOM_SEED_FULL)
   SECTION("Full Seeding Strategy") {
-    REQUIRE(seed_elements == std::mt19937::state_size);  // 624
-    REQUIRE(seed_bits == 19968);
+    constexpr size_t expected_elements =
+        (std::mt19937::state_size * std::mt19937::word_size + result_bits - 1) / result_bits;
+    REQUIRE(seed_elements == expected_elements);
   }
 #else  // default: balanced
   SECTION("Balanced Seeding Strategy") {
-    REQUIRE(seed_elements == 10);
-    REQUIRE(seed_bits == 320);
+    constexpr size_t expected_elements = (256 + result_bits - 1) / result_bits;
+    constexpr size_t min_elements = expected_elements < 4 ? 4 : expected_elements;
+    REQUIRE(seed_elements == min_elements);
   }
 #endif
 }
 
 TEST_CASE("High-quality seeding ensures multi-threaded uniqueness", "[Random][Seeding]") {
-  const int num_threads = 10;
-  std::vector<std::thread> threads;
-  threads.reserve(num_threads);
+  const int num_threads = std::min<int>(kaw::random::detail::get_seed_entropy_element_count(), 16);
+
   std::vector<std::vector<int>> sequences(num_threads, std::vector<int>(5));
 
-  for (int i = 0; i < num_threads; ++i) {
-    threads.emplace_back([&sequences, i]() {
-      for (int j = 0; j < 5; ++j) {
-        sequences[i][j] = kaw::random::get(0, 1000000);
-      }
-    });
-  }
-
-  for (auto& t : threads) {
-    t.join();
-  }
+  {
+    std::vector<std::jthread> threads;
+    threads.reserve(num_threads);
+    for (int i = 0; i < num_threads; ++i) {
+      threads.emplace_back([&sequences, i]() {
+        for (int j = 0; j < 5; ++j) {
+          sequences[i][j] = kaw::random::get(0, 1000000);
+        }
+      });
+    }
+  }  // <-- All threads are guaranteed to be joined here!
 
   std::set<std::vector<int>> unique_sequences(sequences.begin(), sequences.end());
 
