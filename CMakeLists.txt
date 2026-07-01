@@ -66,8 +66,10 @@ find_program(CLANG_TIDY_EXE NAMES clang-tidy-20 clang-tidy)
 
 # Define lint target. Requires clang-tidy to be found and BUILD_TESTING to be enabled (for compilation database TUs).
 if(CLANG_TIDY_EXE)
-    # Enable compile commands database generation automatically when clang-tidy is available
-    set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Enable compile commands export for clang-tidy" FORCE)
+    # Enable compile commands database generation automatically when clang-tidy is available and we are the top-level project
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+        set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Enable compile commands export for clang-tidy")
+    endif()
 
     if(BUILD_TESTING)
         # Recursively glob test sources for linting. CONFIGURE_DEPENDS triggers re-globbing.
