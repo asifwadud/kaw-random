@@ -81,9 +81,9 @@ The library supports three seeding strategies, selectable at compile time using 
 
 | Strategy | Macro | Seed Size | Description | Initialization Performance |
 | :--- | :--- | :--- | :--- | :--- |
-| **Balanced** *(Default)* | *(none)* | 320 bits (10x `uint32_t`) | 256 bits of true entropy mixed with fallback time, thread ID, and stack address offsets. Resilient against deterministic/broken platform `std::random_device` implementations. | Very Fast (8 `std::random_device` queries) |
-| **Basic** | `KAW_RANDOM_SEED_BASIC` | 32 bits (1x `uint32_t`) | Legacy single-seed method. | Ultra Fast (1 `std::random_device` query) |
-| **Full** | `KAW_RANDOM_SEED_FULL` | 19,968 bits (624x `uint32_t`) | Fills the entire internal state of the Mersenne Twister engine. | Slow (624 `std::random_device` queries) |
+| **Balanced** *(Default)* | *(none)* | 8 elements of `std::random_device::result_type` (typically 256 bits) | 8 elements of true entropy mixed with fallback time, thread ID, and stack address offsets. Resilient against deterministic/broken platform `std::random_device` implementations. | Very Fast (8 `std::random_device` queries) |
+| **Basic** | `KAW_RANDOM_SEED_BASIC` | 1 element of `std::random_device::result_type` (typically 32 bits) | Legacy single-seed method. | Ultra Fast (1 `std::random_device` query) |
+| **Full** | `KAW_RANDOM_SEED_FULL` | 624 elements of `std::random_device::result_type` (typically 19,968 bits) | Fills the entire internal state of the Mersenne Twister engine. | Slow (624 `std::random_device` queries) |
 
 ### How to Configure
 
