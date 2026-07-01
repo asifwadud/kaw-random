@@ -47,3 +47,4 @@ jobs:
         version: '20'
         files-changed-only: true
         thread-comments: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
+        extra-args: '-I${{ github.workspace }}/include'
