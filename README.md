@@ -100,63 +100,7 @@ target_compile_definitions(your_target PRIVATE KAW_RANDOM_SEED_FULL)
 
 ---
 
-## Testing
+## Contributing
 
-To configure and run the Catch2 unit test suite:
-
-```bash
-# From within the RandomNumbers subdirectory
-cmake -B build -S .
-cmake --build build
-cd build && ctest --verbose
-```
-
-## Linting & Formatting
-
-The project enforces code formatting and static analysis checks using `clang-format` and `clang-tidy` based on the C++ Core Guidelines.
-
-### Prerequisites
-
-Configure CMake to export compile commands (required by `clang-tidy` to resolve header paths):
-```bash
-cmake -B build -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-```
-
-### Formatting
-
-* **Format all source files in place**:
-  ```bash
-  cmake --build build --target format
-  ```
-* **Verify formatting without modifying files (Dry-Run)**:
-  ```bash
-  cmake --build build --target format-check
-  ```
-
-### Static Analysis
-
-* **Run static analysis via clang-tidy**:
-  ```bash
-  cmake --build build --target lint
-  ```
-
-## AI Code Reviews
-
-This repository integrates with **Codium PR-Agent** to provide automated, agentic code reviews on Pull Requests. The review process is optimized for our modern C++20 and thread-safety guidelines.
-
-### How It Works
-- **Automatic Triggers:** When a new Pull Request is opened or updated, PR-Agent automatically analyzes the diff, formats a clean PR description, and provides structural code suggestions/reviews.
-- **Interactive Commands:** You can comment on your Pull Request using commands to trigger specific tasks. Some useful commands include:
-  - `/review` - Ask the agent to re-run the code review.
-  - `/improve` - Request specific inline code improvement suggestions.
-  - `/describe` - Regenerate the Pull Request title and description based on the code changes.
-  - `/ask <question>` - Ask questions about the Pull Request diff.
-
-### Custom Review Guidelines
-PR-Agent is configured to check for compliance with:
-- Thread-safe random number generation (`thread_local std::mt19937` engines).
-- C++20 concepts (`std::integral`, `std::floating_point` instead of SFINAE template tricks).
-- Closed distribution bounds for integers, half-open distribution bounds for real numbers.
-- Header-only rules (ensuring non-template free functions are `inline`).
-- Catch2 test updates on code modifications.
+Contributions are welcome! Please see the [Contributing Guidelines](CONTRIBUTING.md) for details on setting up the local build system, running unit tests, formatting/linting code, and working with our pull request review workflow.
 
