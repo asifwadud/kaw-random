@@ -36,10 +36,10 @@ jobs:
       run: cmake -B build -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
     - name: Run C++ Linter
-      uses: cpp-linter/cpp-linter-action@v2
+      uses: cpp-linter/cpp-linter-action@8e85cd02c8c3fe3ae527c94b5683fe2366b144ed # v2.20.0
       id: linter
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ github.event_name == 'pull_request' && secrets.GITHUB_TOKEN || '' }}
       with:
         style: 'file'
         tidy-checks: ''
