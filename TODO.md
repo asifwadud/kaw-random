@@ -11,7 +11,7 @@ A collection of planned features, refactoring goals, and design improvements for
   - Add optional support/wrappers for lightweight, high-performance engines like PCG (`pcg32`/`pcg64`), Xoshiro, or `WyRand`.
   - Decouple the library API from `std::mt19937` by templating the generator wrapper:
     ```cpp
-    template <typename Engine = std::mt19937, typename T>
+    template <typename T, typename Engine = std::mt19937>
     T get(T low, T high);
     ```
   - Support compile-time configuration of the default engine (e.g., `#define KAW_RANDOM_DEFAULT_ENGINE_PCG` / `-DKAW_RANDOM_DEFAULT_ENGINE_PCG` in CMake).
@@ -25,6 +25,16 @@ A collection of planned features, refactoring goals, and design improvements for
   - **Benefits**:
     - *Code & Build Simplification*: Deletes preprocessor macros, configuration enums, static branch conditionals, and complex multiple test binaries (`kaw_random_tests_basic`/`kaw_random_tests_full`) in `CMakeLists.txt` and `cmake.yml`.
     - *Enforced Quality*: Eliminates the risk of users accidentally configuring under-seeded engines (Basic) or incurring unnecessary startup latency overhead (Full).
+- [ ] **Abstractions for Seeding (Entropy Sources & Collector)**
+  - Refactor `fallback_entropy.hpp` and the seeding pipeline to use a modular C++20 `entropy_source` concept.
+  - Implement individual, highly testable sources (e.g. `random_device_source`, `system_time_source`, `thread_id_source`, `stack_address_source`).
+  - Introduce a compile-time `entropy_collector` that aggregates and mixes entropy from configured sources.
+  - **Compile-time Fold Mixing**: Handle differing bit-widths of various entropy sources (e.g. 64-bit stack pointers or time ticks vs. 32-bit `random_device` results) safely using compile-time chunk folding (`fold_entropy`).
+  - **Benefits**:
+    - *Extensibility*: Easily plug in new/custom entropy sources on specific platforms (e.g. process ID, network card stats, or hardware entropy).
+    - *Code Quality*: Isolates unsafe pointer cast warnings (`reinterpret_cast` for stack pointer) to a single struct (`stack_address_source`) with local warning suppressions (`// NOLINT`).
+    - *No Loss of Entropy*: Ensures all bits of larger sources contribute fully to smaller target types without truncation or padding issues.
+
 
 
 ## 2. API & Distribution Consistency
