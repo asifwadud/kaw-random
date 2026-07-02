@@ -23,6 +23,7 @@ Generate random values by instantiating a stateful generator functor using type 
 
 * **`random_int`** generates random integers for a closed/inclusive range `[low, high]` [^1].
 * **`random_bool`** generates random booleans based on a probability parameter [^2].
+* **`random_normal_double` / `random_normal_float`** generates normally (Gaussian) distributed floating-point numbers based on mean and standard deviation parameters.
 
 ```cpp
 using namespace kaw;
@@ -35,6 +36,9 @@ int second = rand_int();      // e.g. 7
 random_bool rand_bool(0.5);   // 50% probability of true
 bool val = rand_bool();       // e.g. true
 
+random_normal_double rand_norm(0.0, 1.0); // Standard normal distribution (mean=0, stddev=1)
+double val_norm = rand_norm();            // e.g. -0.42
+
 // 2. Stateful Functor with Standard Algorithms
 random_float rand_float(-100.0f, 100.0f);
 std::vector<float> values(10);
@@ -45,7 +49,7 @@ std::generate(values.begin(), values.end(), rand_float);
 [^2]: **Specialized for bools:** Maps to `std::bernoulli_distribution`. Standardized as single probability parameter.
 
 ### 2. Convenience Free Functions
-Generate random numbers on-the-fly without instantiating a generator class, using inclusive ranges for integers, half-open/exclusive ranges `[low, high)` for reals [^3], and Bernoulli trials for booleans:
+Generate random numbers on-the-fly without instantiating a generator class, using inclusive ranges for integers, half-open/exclusive ranges `[low, high)` for reals [^3], Bernoulli trials for booleans, and normal (Gaussian) distributions:
 ```cpp
 // Generate integers (inclusive) or reals (exclusive)
 int val1 = kaw::random::get(1, 10);            // 1 to 10 inclusive
@@ -54,6 +58,10 @@ double val2 = kaw::random::get(0.0, 1.0);      // 0.0 to 1.0 (exclusive)
 // Generate booleans (Bernoulli distribution)
 bool heads = kaw::random::get_bool();          // Default 50% probability
 bool lucky = kaw::random::get_bool(0.1);       // 10% chance of returning true
+
+// Generate normally distributed values
+double val3 = kaw::random::get_normal(0.0, 1.0); // Mean = 0.0, stddev = 1.0
+double val4 = kaw::random::get_gaussian(10.0, 2.0); // Alias for get_normal
 ```
 
 [^3]: **Exclusive `[low, high)` for reals:** Maps to `std::uniform_real_distribution`. Standardized as half-open by the C++ committee to match real math standards and avoid out-of-bounds indexing when scaling.
@@ -62,13 +70,40 @@ bool lucky = kaw::random::get_bool(0.1);       // 10% chance of returning true
 ```cpp
 std::vector<int> scores(100);
 kaw::random::fill(scores, 1, 100);             // Fills vector in-place
+
+std::vector<double> noise(100);
+kaw::random::fill_normal(noise, 0.0, 1.0);     // Fills with normal values [^4]
 ```
 
 ### 4. Generating a New Container
 ```cpp
 // Explicitly specify the desired container type as a template parameter
 auto prices = kaw::random::generate<std::vector<double>>(50, 10.0, 50.0);
+
+// Generate a container with normally distributed values
+auto offsets = kaw::random::generate_normal<std::vector<double>>(50, 0.0, 0.5);
 ```
+
+[^4]: **Gaussian helper aliases:** You can also use `fill_gaussian` and `generate_gaussian` as direct aliases.
+
+
+## Performance Guidelines
+
+While the library provides convenience free functions for quick, on-the-fly number generation, they are **slightly less efficient** than instantiating stateful generator functors in high-performance loops:
+
+1. **Thread-Local Lookup Overhead**:
+   * Free functions (`get`, `get_bool`, `get_normal`) must perform a thread-local storage (TLS) lookup on every single call to locate the current thread's random engine and persistent distribution cache.
+   * Stateful functors (like `random_int` or `random_normal_double`) resolve the engine lookup only once (or locally) and hold the distribution state directly as class members, avoiding TLS overhead in loops.
+2. **Parameter Re-Evaluation (`param_type`)**:
+   * Free functions must copy and update the distribution's parameter configuration (using `std::normal_distribution::param_type`) on every call to support changing arguments dynamically.
+   * Stateful functors construct the distribution parameters exactly once.
+3. **Box-Muller Caching for Normal Distributions**:
+   * Normally distributed values are generated in pairs (Box-Muller transform). The second value is cached internally inside the distribution object.
+   * Stateful functors (`random_normal_double`) preserve this cache across successive calls. While free functions also cache them thread-locally, changing the parameters (`mean` or `stddev`) dynamically between calls will invalidate and discard this cache.
+
+> [!TIP]
+> Use **convenience free functions** for simple, one-off random queries (e.g. game setup, picking a server path, generating a unique ID on start).
+> Use **stateful functors** (`kaw::random_int`, `kaw::random_normal_double`) inside tight loops or when passing to standard library algorithms (e.g. `std::generate`).
 
 
 ## Seeding & Strategies
