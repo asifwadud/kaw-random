@@ -1,16 +1,15 @@
 #ifndef KAW_RANDOM_HPP
 #define KAW_RANDOM_HPP
 
-#include <algorithm>
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <kaw/detail/seeding_strategies.hpp>
 #include <random>
 #include <type_traits>
-#include <vector>
 
 #if __has_include(<stdfloat>)
-#include <stdfloat>
+#include <stdfloat>  // NOLINT(misc-include-cleaner)
 #endif
 
 namespace kaw::random {

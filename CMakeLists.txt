@@ -72,15 +72,33 @@ if(CLANG_TIDY_EXE)
     endif()
 
     if(BUILD_TESTING)
-        # Recursively glob test sources for linting. CONFIGURE_DEPENDS triggers re-globbing.
+        # Glob test files for linting
         file(GLOB_RECURSE LINT_SOURCES CONFIGURE_DEPENDS
             "tests/*.cpp"
         )
-        # Target to run static analysis driven by translation units with header filter
-        add_custom_target(lint
-            COMMAND ${CLANG_TIDY_EXE} -p ${CMAKE_CURRENT_BINARY_DIR} "-header-filter=^${CMAKE_CURRENT_SOURCE_DIR}/include/" ${LINT_SOURCES}
+        # Glob header files for direct standalone linting
+        file(GLOB_RECURSE LINT_HEADERS CONFIGURE_DEPENDS
+            "include/*.hpp"
+            "include/*.h"
+        )
+
+        # Target to lint test files (driven by compile database and tests/ rules)
+        add_custom_target(lint-tests
+            COMMAND ${CLANG_TIDY_EXE} -p ${CMAKE_CURRENT_BINARY_DIR} ${LINT_SOURCES}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMENT "Running static analysis via clang-tidy..."
+            COMMENT "Running static analysis on tests..."
+        )
+
+        # Target to lint header files directly (driven by root rules and explicit compiler flags)
+        add_custom_target(lint-headers
+            COMMAND ${CLANG_TIDY_EXE} ${LINT_HEADERS} -- -std=c++20 -I${CMAKE_CURRENT_SOURCE_DIR}/include
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Running static analysis on headers..."
+        )
+
+        # Aggregate lint target combining both
+        add_custom_target(lint
+            DEPENDS lint-tests lint-headers
         )
     else()
         # Fallback if testing (and thus compilation commands database) is disabled
