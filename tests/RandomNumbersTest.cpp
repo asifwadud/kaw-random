@@ -143,3 +143,56 @@ TEST_CASE("High-quality seeding ensures multi-threaded uniqueness", "[Random][Se
   // Verify all threads produced different random sequences, proving independent seeds
   REQUIRE(unique_sequences.size() == num_threads);
 }
+
+TEST_CASE("Normal/Gaussian distribution correctness", "[Random]") {
+  SECTION("Stateful normal_gen functor") {
+    kaw::random_normal_double norm(10.0, 2.0);
+    constexpr int samples = 5000;
+    double sum = 0.0;
+    for (int i = 0; i < samples; ++i) {
+      sum += norm();
+    }
+    double mean = sum / samples;
+    // For mean = 10.0, stddev = 2.0, N = 5000, 99.9% confidence interval is well within 0.2
+    REQUIRE(mean > 9.8);
+    REQUIRE(mean < 10.2);
+  }
+
+  SECTION("get_normal and get_gaussian free functions") {
+    constexpr int samples = 1000;
+    double sum_normal = 0.0;
+    double sum_gaussian = 0.0;
+    for (int i = 0; i < samples; ++i) {
+      sum_normal += kaw::random::get_normal(0.0, 1.0);
+      sum_gaussian += kaw::random::get_gaussian(0.0, 1.0);
+    }
+    double mean_normal = sum_normal / samples;
+    double mean_gaussian = sum_gaussian / samples;
+    REQUIRE(mean_normal > -0.15);
+    REQUIRE(mean_normal < 0.15);
+    REQUIRE(mean_gaussian > -0.15);
+    REQUIRE(mean_gaussian < 0.15);
+  }
+
+  SECTION("Container helpers for normal distributions") {
+    auto vec = kaw::random::generate_normal<std::vector<double>>(100, 50.0, 5.0);
+    REQUIRE(vec.size() == 100);
+    double sum = 0.0;
+    for (double val : vec) {
+      sum += val;
+    }
+    double mean = sum / static_cast<double>(vec.size());
+    REQUIRE(mean > 48.0);
+    REQUIRE(mean < 52.0);
+
+    std::vector<float> vec_float(100);
+    kaw::random::fill_gaussian(vec_float, 0.0f, 1.0f);
+    double sum_float = 0.0;
+    for (float val : vec_float) {
+      sum_float += val;
+    }
+    double mean_float = sum_float / static_cast<double>(vec_float.size());
+    REQUIRE(mean_float > -0.5);
+    REQUIRE(mean_float < 0.5);
+  }
+}
