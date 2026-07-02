@@ -201,17 +201,21 @@ TEST_CASE("Normal/Gaussian distribution correctness", "[Random]") {
     REQUIRE(val_stddev1 > 9.9);
     REQUIRE(val_stddev1 < 10.1);
 
-    // Call with huge stddev. If stddev change is NOT picked up (uses 0.0001),
-    // these values would be trapped within [9.9, 10.1] with 100% certainty.
-    double val_stddev2_a = kaw::random::get_normal(10.0, 1000.0);
-    double val_stddev2_b = kaw::random::get_normal(10.0, 1000.0);
-    INFO("val_stddev2_a (stddev=1000): " << val_stddev2_a);
-    INFO("val_stddev2_b (stddev=1000): " << val_stddev2_b);
+    // Call with stddev = 5.0 and compute empirical standard deviation of a small sample set.
+    // If the stddev change is NOT picked up (still uses 0.0001), the empirical stddev will be
+    // < 0.001. If picked up (uses 5.0), it is virtually guaranteed to be > 1.0 (failure prob ~
+    // 10^-25).
+    constexpr int cache_check_samples = 100;
+    double sq_diff_sum = 0.0;
+    for (int i = 0; i < cache_check_samples; ++i) {
+      double val = kaw::random::get_normal(10.0, 5.0);
+      double diff = val - 10.0;
+      sq_diff_sum += diff * diff;
+    }
+    double emp_stddev = std::sqrt(sq_diff_sum / cache_check_samples);
 
-    // At least one of these must be outside [9.9, 10.1]
-    // (chance of false failure < 1 in 150 million)
-    REQUIRE((val_stddev2_a < 9.9 || val_stddev2_a > 10.1 || val_stddev2_b < 9.9 ||
-             val_stddev2_b > 10.1));
+    INFO("Empirical stddev (expected around 5.0): " << emp_stddev);
+    REQUIRE(emp_stddev > 1.0);
 
     double val_stddev3 = kaw::random::get_normal(10.0, 0.0001);  // resets back
     INFO("val_stddev3 (stddev=0.0001): " << val_stddev3);
