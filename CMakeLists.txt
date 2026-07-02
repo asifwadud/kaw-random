@@ -72,14 +72,13 @@ if(CLANG_TIDY_EXE)
     endif()
 
     if(BUILD_TESTING)
+        # Recursively glob test sources for linting. CONFIGURE_DEPENDS triggers re-globbing.
         file(GLOB_RECURSE LINT_SOURCES CONFIGURE_DEPENDS
             "tests/*.cpp"
-            "include/*.hpp"
-            "include/*.h"
         )
-        # Target to run static analysis
+        # Target to run static analysis driven by translation units with header filter
         add_custom_target(lint
-            COMMAND ${CLANG_TIDY_EXE} -p ${CMAKE_CURRENT_BINARY_DIR} "-extra-arg=-I${CMAKE_CURRENT_SOURCE_DIR}/include" ${LINT_SOURCES}
+            COMMAND ${CLANG_TIDY_EXE} -p ${CMAKE_CURRENT_BINARY_DIR} "-header-filter=^${CMAKE_CURRENT_SOURCE_DIR}/include/" ${LINT_SOURCES}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Running static analysis via clang-tidy..."
         )
