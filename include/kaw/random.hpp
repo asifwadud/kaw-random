@@ -78,14 +78,14 @@ template <typename T>
 T get(T low, T high) {
   using dist_t = random_dist_t<T>;
   thread_local static dist_t dist;
-  typename dist_t::param_type params(low, high);
+  const typename dist_t::param_type params(low, high);
   return dist(detail::get_thread_engine(), params);
 }
 
 // Generate a random boolean (default 50% probability)
 inline bool get_bool(double probability = gen<bool>::default_probability) {
   thread_local static std::bernoulli_distribution dist;
-  std::bernoulli_distribution::param_type params(probability);
+  const std::bernoulli_distribution::param_type params(probability);
   return dist(detail::get_thread_engine(), params);
 }
 
