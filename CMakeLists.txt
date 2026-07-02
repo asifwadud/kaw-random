@@ -83,10 +83,12 @@ if(CLANG_TIDY_EXE)
         )
 
         # Target to lint test files (driven by compile database and tests/ rules)
+        # Depends on kaw_random_tests to ensure compile_commands.json is populated first
         add_custom_target(lint-tests
             COMMAND ${CLANG_TIDY_EXE} -p ${CMAKE_CURRENT_BINARY_DIR} ${LINT_SOURCES}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Running static analysis on tests..."
+            DEPENDS kaw_random_tests
         )
 
         # Target to lint header files directly (driven by root rules and explicit compiler flags)
