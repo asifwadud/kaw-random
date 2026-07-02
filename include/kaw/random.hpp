@@ -213,7 +213,8 @@ using random_int64_t = random::gen<std::int64_t>;
 using random_uint64_t = random::gen<std::uint64_t>;
 using random_size_t = random::gen<std::size_t>;
 
-// stdfloat types (conditionally compiled using standard macros)
+// stdfloat types (conditionally compiled using standard macros and header availability)
+#if __has_include(<stdfloat>)
 #ifdef __STDCPP_FLOAT16_T__
 using random_float16_t = random::gen<std::float16_t>;
 using random_normal_float16_t = random::normal_gen<std::float16_t>;
@@ -233,6 +234,7 @@ using random_normal_float128_t = random::normal_gen<std::float128_t>;
 #ifdef __STDCPP_BFLOAT16_T__
 using random_bfloat16_t = random::gen<std::bfloat16_t>;
 using random_normal_bfloat16_t = random::normal_gen<std::bfloat16_t>;
+#endif
 #endif
 }  // namespace kaw
 
