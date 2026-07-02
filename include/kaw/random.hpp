@@ -93,8 +93,19 @@ template <typename T = double>
   requires std::floating_point<T>
 inline T get_normal(T mean = 0.0, T stddev = 1.0) {
   thread_local static std::normal_distribution<T> dist;
-  typename std::normal_distribution<T>::param_type params(mean, stddev);
-  return dist(detail::get_thread_engine(), params);
+  thread_local static T last_mean = 0.0;
+  thread_local static T last_stddev = 0.0;
+  thread_local static bool has_last = false;
+
+  if (!has_last || last_mean != mean || last_stddev != stddev) {
+    dist.param(typename std::normal_distribution<T>::param_type(mean, stddev));
+    dist.reset();
+    last_mean = mean;
+    last_stddev = stddev;
+    has_last = true;
+  }
+
+  return dist(detail::get_thread_engine());
 }
 
 template <typename T = double>

@@ -153,12 +153,13 @@ TEST_CASE("Normal/Gaussian distribution correctness", "[Random]") {
       sum += norm();
     }
     double mean = sum / samples;
-    // For mean = 10.0, stddev = 2.0, N = 5000, 99.9% confidence interval is well within 0.2
+
+    INFO("Sample mean: " << mean << " (expected close to 10.0)");
     REQUIRE(mean > 9.8);
     REQUIRE(mean < 10.2);
   }
 
-  SECTION("get_normal and get_gaussian free functions") {
+  SECTION("get_normal and get_gaussian basic generation") {
     constexpr int samples = 1000;
     double sum_normal = 0.0;
     double sum_gaussian = 0.0;
@@ -168,10 +169,54 @@ TEST_CASE("Normal/Gaussian distribution correctness", "[Random]") {
     }
     double mean_normal = sum_normal / samples;
     double mean_gaussian = sum_gaussian / samples;
+
+    INFO("get_normal mean: " << mean_normal);
+    INFO("get_gaussian mean: " << mean_gaussian);
     REQUIRE(mean_normal > -0.15);
     REQUIRE(mean_normal < 0.15);
     REQUIRE(mean_gaussian > -0.15);
     REQUIRE(mean_gaussian < 0.15);
+  }
+
+  SECTION("get_normal cache reset on mean change") {
+    double val1 = kaw::random::get_normal(10.0, 0.0001);
+    INFO("val1 (mean=10): " << val1);
+    REQUIRE(val1 > 9.9);
+    REQUIRE(val1 < 10.1);
+
+    double val2 = kaw::random::get_normal(100.0, 0.0001);
+    INFO("val2 (mean=100): " << val2);
+    REQUIRE(val2 > 99.9);
+    REQUIRE(val2 < 100.1);
+
+    double val3 = kaw::random::get_normal(10.0, 0.0001);
+    INFO("val3 (mean=10): " << val3);
+    REQUIRE(val3 > 9.9);
+    REQUIRE(val3 < 10.1);
+  }
+
+  SECTION("get_normal cache reset on stddev change") {
+    double val_stddev1 = kaw::random::get_normal(10.0, 0.0001);
+    INFO("val_stddev1 (stddev=0.0001): " << val_stddev1);
+    REQUIRE(val_stddev1 > 9.9);
+    REQUIRE(val_stddev1 < 10.1);
+
+    // Call with huge stddev. If stddev change is NOT picked up (uses 0.0001),
+    // these values would be trapped within [9.9, 10.1] with 100% certainty.
+    double val_stddev2_a = kaw::random::get_normal(10.0, 1000.0);
+    double val_stddev2_b = kaw::random::get_normal(10.0, 1000.0);
+    INFO("val_stddev2_a (stddev=1000): " << val_stddev2_a);
+    INFO("val_stddev2_b (stddev=1000): " << val_stddev2_b);
+
+    // At least one of these must be outside [9.9, 10.1]
+    // (chance of false failure < 1 in 150 million)
+    REQUIRE((val_stddev2_a < 9.9 || val_stddev2_a > 10.1 || val_stddev2_b < 9.9 ||
+             val_stddev2_b > 10.1));
+
+    double val_stddev3 = kaw::random::get_normal(10.0, 0.0001);  // resets back
+    INFO("val_stddev3 (stddev=0.0001): " << val_stddev3);
+    REQUIRE(val_stddev3 > 9.9);
+    REQUIRE(val_stddev3 < 10.1);
   }
 
   SECTION("Container helpers for normal distributions") {
@@ -182,6 +227,8 @@ TEST_CASE("Normal/Gaussian distribution correctness", "[Random]") {
       sum += val;
     }
     double mean = sum / static_cast<double>(vec.size());
+
+    INFO("Container generate_normal mean: " << mean);
     REQUIRE(mean > 48.0);
     REQUIRE(mean < 52.0);
 
@@ -192,6 +239,8 @@ TEST_CASE("Normal/Gaussian distribution correctness", "[Random]") {
       sum_float += val;
     }
     double mean_float = sum_float / static_cast<double>(vec_float.size());
+
+    INFO("Container fill_gaussian mean: " << mean_float);
     REQUIRE(mean_float > -0.5);
     REQUIRE(mean_float < 0.5);
   }
