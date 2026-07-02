@@ -44,7 +44,8 @@ private:
 template <>
 class gen<bool> {
 public:
-  gen(double probability = 0.5) : distribution(probability) {}
+  static constexpr double default_probability = 0.5;
+  gen(double probability = default_probability) : distribution(probability) {}
 
   bool operator()() { return distribution(get_engine()); }
 
@@ -82,7 +83,7 @@ T get(T low, T high) {
 }
 
 // Generate a random boolean (default 50% probability)
-inline bool get_bool(double probability = 0.5) {
+inline bool get_bool(double probability = gen<bool>::default_probability) {
   thread_local static std::bernoulli_distribution dist;
   std::bernoulli_distribution::param_type params(probability);
   return dist(detail::get_thread_engine(), params);
