@@ -157,6 +157,7 @@ void fill_gaussian(Container& container, typename Container::value_type mean = 0
 
 // Generate a new container filled with normally distributed values
 template <typename Container>
+  requires std::floating_point<typename Container::value_type>
 Container generate_normal(size_t size, typename Container::value_type mean = 0.0,
                           typename Container::value_type stddev = 1.0) {
   Container container(size);
@@ -165,6 +166,7 @@ Container generate_normal(size_t size, typename Container::value_type mean = 0.0
 }
 
 template <typename Container>
+  requires std::floating_point<typename Container::value_type>
 Container generate_gaussian(size_t size, typename Container::value_type mean = 0.0,
                             typename Container::value_type stddev = 1.0) {
   return generate_normal<Container>(size, mean, stddev);
