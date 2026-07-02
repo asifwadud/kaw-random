@@ -15,7 +15,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Configure CMake
-      run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+      run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -G Ninja
 
     - name: Build Project
       run: cmake --build build --config Release
@@ -33,7 +33,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Configure CMake (Export Compile Commands)
-      run: cmake -B build -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      run: cmake -B build -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja
 
     - name: Run C++ Linter
       uses: cpp-linter/cpp-linter-action@8e85cd02c8c3fe3ae527c94b5683fe2366b144ed # v2.20.0
